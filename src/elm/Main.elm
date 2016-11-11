@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Components.TodoList exposing (todoList)
 import Components.Todo exposing (Todo)
-
+import Debug
 
 main =
     Html.beginnerProgram
@@ -31,7 +31,7 @@ model =
           }
         , { text = "Todo 2"
           , description = "decsctiption2"
-          , completed = True
+          , completed = False
           }
         ]
         ""
@@ -48,7 +48,7 @@ addTodo text =
 type Msg
     = Change String
     | Submit
-    | TodoClick
+    | TodoClick String
 
 
 update : Msg -> Model -> Model
@@ -63,8 +63,11 @@ update msg model =
                 , userInput = ""
             }
 
-        TodoClick ->
-            { model | todos = List.map (\t -> { t | completed = True }) model.todos }
+        TodoClick data ->
+            let
+                x = Debug.log "Data" data
+            in
+                { model | todos = List.map (\t -> if t.text == x then { t | completed = not t.completed } else t) model.todos }
 
 
 view : Model -> Html Msg

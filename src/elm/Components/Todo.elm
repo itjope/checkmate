@@ -20,8 +20,8 @@ getStyle completed =
         [ ( "opacity", "1" ) ]
 
 
-todo : a -> Todo -> Html a
+todo : (String -> a) -> Todo -> Html a
 todo msg todo =
     li
-        [ class "list-group-item", style (getStyle todo.completed), onClick msg ]
+        [ class "list-group-item", style (getStyle todo.completed), onClick <| msg todo.text ]
         [ text todo.text ]
