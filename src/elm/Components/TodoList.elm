@@ -6,8 +6,8 @@ import Components.Todo exposing (Todo, todo)
 
 
 todoList : List Todo -> a -> Html a
-todoList model msg =
+todoList todos msg =
     ul
         [ class "list-group" ]
     <|
-        List.map (todo msg) model
+        List.map (todo msg) todos

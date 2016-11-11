@@ -25,16 +25,24 @@ type alias Model =
 model : Model
 model =
     Model
-        [ { text = "text"
+        [ { text = "Todo 1"
           , description = "decsctiption"
           , completed = False
           }
-        , { text = "text2"
+        , { text = "Todo 2"
           , description = "decsctiption2"
           , completed = True
           }
         ]
         ""
+
+
+addTodo : String -> Todo
+addTodo text =
+    { text = text
+    , description = "test"
+    , completed = False
+    }
 
 
 type Msg
@@ -50,10 +58,13 @@ update msg model =
             { model | userInput = updatedCommand }
 
         Submit ->
-            { model | userInput = "" }
+            { model
+                | todos = model.todos ++ [ addTodo model.userInput ]
+                , userInput = ""
+            }
 
         TodoClick ->
-            { model | userInput = "CHECKED" }
+            { model | todos = List.map (\t -> { t | completed = True }) model.todos }
 
 
 view : Model -> Html Msg
@@ -67,6 +78,5 @@ view model =
                     ]
                 ]
             ]
-        , div [] [ text model.userInput ]
         , todoList model.todos TodoClick
         ]
