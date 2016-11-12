@@ -10,4 +10,4 @@ todoList todos msg =
     ul
         [ class "list-group" ]
     <|
-        List.map (todo msg) todos
+        List.indexedMap (todo msg) todos

@@ -2,17 +2,46 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 @import '~bootstrap-sass/assets/stylesheets/bootstrap/_mixins.scss';
 @import '~bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 
+$background-color: #cecece;
+$border-radius: 1px;
+
 form.cm-command {
   position: fixed;
   bottom: 0px;
   left: 0px;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-left: 10px;
+  padding-right: 13px;
+  z-index: 1;
+  background-color: #fff;
+}
+.form-control {
+  border-radius: $border-radius;
+}
+
+.badge {
+  border-radius: $border-radius;
+  font-weight: 200;
+  background-color: $background-color;
+  min-width: 28px;
+}
+
+.input-group-addon {
+  border-radius: $border-radius;
+  background-color: $background-color;
+  color: #fff;
+}
+
+span.cm-todo-toggle {
+  margin-right: 5px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .list-group {
   margin-left: 10px;
   margin-top: 10px;
+  overflow-y: auto;
+  padding-bottom: 100px;
 }
 
 .list-group-item:first-child  {
@@ -25,8 +54,8 @@ form.cm-command {
 
 .list-group-item {
   border: none;
-  border-left: 20px solid #eee;
   margin-top: 4px;
   border-radius: 0px;
   padding: 5px 10px;
+  border-left: solid 3px #eee;
 }

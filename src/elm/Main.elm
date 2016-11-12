@@ -63,6 +63,14 @@ getId cuid cuidCounter =
     cuid ++ toString cuidCounter
 
 
+completeTodo : String -> Todo -> Todo
+completeTodo id todo =
+    if todo.id == id then
+        { todo | completed = not todo.completed }
+    else
+        todo
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -82,12 +90,7 @@ update msg model =
             ( { model
                 | todos =
                     List.map
-                        (\t ->
-                            if t.id == id then
-                                { t | completed = not t.completed }
-                            else
-                                t
-                        )
+                        (completeTodo id)
                         model.todos
               }
             , Cmd.none
@@ -101,9 +104,9 @@ view model =
             [ div [ class "form-group" ]
                 [ div [ class "input-group" ]
                     [ div [ class "input-group-addon" ]
-                        [ span [ class "glyphicon glyphicon-plus" ] []
+                        [ span [ class "glyphicon glyphicon-option-vertical" ] []
                         ]
-                    , input [ class "form-control", value model.userInput, placeholder "Enter command", onInput Change ] []
+                    , input [ class "form-control", value model.userInput, onInput Change ] []
                     ]
                 ]
             ]
