@@ -1,12 +1,13 @@
 module Components.Todo exposing (..)
 
-import Html exposing (..)
+import Html exposing (Html, li, text, span)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 
 
 type alias Todo =
-    { text : String
+    { id : String
+    , text : String
     , description : String
     , completed : Bool
     }
@@ -20,8 +21,10 @@ getStyle completed =
         [ ( "opacity", "1" ) ]
 
 
-todo : a -> Todo -> Html a
+todo : (String -> a) -> Todo -> Html a
 todo msg todo =
     li
-        [ class "list-group-item", style (getStyle todo.completed), onClick msg ]
-        [ text todo.text ]
+        [ class "list-group-item", style (getStyle todo.completed), onClick <| msg todo.id ]
+        [ span [ class "badge" ] [ text "Project 1" ]
+        , text todo.text
+        ]

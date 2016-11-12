@@ -1,45 +1,41 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, input, text)
+import Html exposing (Html, div, input, text, span)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Components.TodoList exposing (todoList)
 import Components.Todo exposing (Todo)
+import Debug
 
 
+main : Program (Flags)
 main =
-    Html.beginnerProgram
-        { model = model
+    Html.programWithFlags
+        { init = init
         , view = view
         , update = update
+        , subscriptions = always Sub.none
         }
+
+
+type alias Flags =
+    { cuid : String
+    }
 
 
 type alias Model =
     { todos : List Todo
     , userInput : String
+    , cuid : String
+    , cuidCounter : Int
     }
 
 
-model : Model
-model =
-    Model
-        [ { text = "Todo 1"
-          , description = "decsctiption"
-          , completed = False
-          }
-        , { text = "Todo 2"
-          , description = "decsctiption2"
-          , completed = True
-          }
-        ]
-        ""
-
-
-addTodo : String -> Todo
-addTodo text =
-    { text = text
+addTodo : String -> String -> Todo
+addTodo text id =
+    { id = id
+    , text = text
     , description = "test"
     , completed = False
     }
@@ -48,23 +44,54 @@ addTodo text =
 type Msg
     = Change String
     | Submit
-    | TodoClick
+    | TodoClick String
 
 
-update : Msg -> Model -> Model
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( Model
+        []
+        ""
+        flags.cuid
+        0
+    , Cmd.none
+    )
+
+
+getId : String -> Int -> String
+getId cuid cuidCounter =
+    cuid ++ toString cuidCounter
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Change updatedCommand ->
-            { model | userInput = updatedCommand }
+            ( { model | userInput = updatedCommand }, Cmd.none )
 
         Submit ->
-            { model
-                | todos = model.todos ++ [ addTodo model.userInput ]
+            ( { model
+                | todos = model.todos ++ [ addTodo model.userInput (getId model.cuid model.cuidCounter) ]
                 , userInput = ""
-            }
+                , cuidCounter = model.cuidCounter + 1
+              }
+            , Cmd.none
+            )
 
-        TodoClick ->
-            { model | todos = List.map (\t -> { t | completed = True }) model.todos }
+        TodoClick id ->
+            ( { model
+                | todos =
+                    List.map
+                        (\t ->
+                            if t.id == id then
+                                { t | completed = not t.completed }
+                            else
+                                t
+                        )
+                        model.todos
+              }
+            , Cmd.none
+            )
 
 
 view : Model -> Html Msg
@@ -73,7 +100,9 @@ view model =
         [ Html.form [ class "cm-command", onSubmit Submit ]
             [ div [ class "form-group" ]
                 [ div [ class "input-group" ]
-                    [ div [ class "input-group-addon" ] [ text "" ]
+                    [ div [ class "input-group-addon" ]
+                        [ span [ class "glyphicon glyphicon-plus" ] []
+                        ]
                     , input [ class "form-control", value model.userInput, placeholder "Enter command", onInput Change ] []
                     ]
                 ]
