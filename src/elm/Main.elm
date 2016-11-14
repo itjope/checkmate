@@ -8,6 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit, onBlur)
 import Components.TodoList exposing (todoList)
 import Components.Todo exposing (Todo, Id)
+import Json.Decode as Json
 
 
 main : Program (Flags)
@@ -42,6 +43,7 @@ type Msg
     | Blur
     | DomError Dom.Error
     | DomSuccess
+    | Keystroke Int
 
 
 type alias Model =
@@ -94,6 +96,12 @@ updateTodo id text todo =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Keystroke keyCode ->
+            if keyCode == 27 then
+                ( { model | userInput = "", selected = Nothing }, Cmd.none )
+            else
+                ( model, Cmd.none )
+
         Change value ->
             ( { model | userInput = value }, Cmd.none )
 
@@ -156,6 +164,11 @@ update msg model =
             )
 
 
+onKeyUp : (Int -> msg) -> Html.Attribute msg
+onKeyUp tagger =
+    Html.Events.on "keyup" (Json.map tagger Html.Events.keyCode)
+
+
 view : Model -> Html Msg
 view model =
     div []
@@ -165,7 +178,7 @@ view model =
                     [ div [ class "input-group-addon" ]
                         [ span [ class "glyphicon glyphicon-option-vertical" ] []
                         ]
-                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change, onBlur Blur ] []
+                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change, onBlur Blur, onKeyUp Keystroke ] []
                     ]
                 ]
             ]
