@@ -5,7 +5,7 @@ import Task exposing (Task)
 import Html exposing (Html, div, input, text, span)
 import Html.App as Html
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Events exposing (onInput, onSubmit, onBlur)
 import Components.TodoList exposing (todoList)
 import Components.Todo exposing (Todo, Id)
 
@@ -39,6 +39,7 @@ type Msg
     | Submit
     | TodoToggleClick Id
     | TodoTextClick Todo
+    | Blur
     | DomError Dom.Error
     | DomSuccess
 
@@ -139,6 +140,9 @@ update msg model =
                 , cmd
                 )
 
+        Blur ->
+            ( { model | selected = Nothing, userInput = "" }, Cmd.none )
+
         DomError error ->
             ( { model
                 | userInput = "Failed to set focus"
@@ -161,7 +165,7 @@ view model =
                     [ div [ class "input-group-addon" ]
                         [ span [ class "glyphicon glyphicon-option-vertical" ] []
                         ]
-                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change ] []
+                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change, onBlur Blur ] []
                     ]
                 ]
             ]
