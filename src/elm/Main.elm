@@ -5,8 +5,7 @@ import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Components.TodoList exposing (todoList)
-import Components.Todo exposing (Todo)
-import Debug
+import Components.Todo exposing (Todo, Id)
 
 
 main : Program (Flags)
@@ -24,16 +23,8 @@ type alias Flags =
     }
 
 
-type alias Model =
-    { todos : List Todo
-    , userInput : String
-    , cuid : String
-    , cuidCounter : Int
-    }
-
-
-addTodo : String -> String -> Todo
-addTodo text id =
+addTodo : Id -> String -> Todo
+addTodo id text =
     { id = id
     , text = text
     , description = "test"
@@ -44,16 +35,32 @@ addTodo text id =
 type Msg
     = Change String
     | Submit
-    | TodoClick String
+    | TodoToggleClick Id
+    | TodoTextClick Todo
+
+
+type alias Model =
+    { todos : List Todo
+    , selected : Maybe Todo
+    , userInput : String
+    , cuid : String
+    , cuidCounter : Int
+    }
+
+
+getInitialModel : Flags -> Model
+getInitialModel flags =
+    { todos = []
+    , selected = Nothing
+    , userInput = ""
+    , cuid = flags.cuid
+    , cuidCounter = 0
+    }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( Model
-        []
-        ""
-        flags.cuid
-        0
+    ( getInitialModel flags
     , Cmd.none
     )
 
@@ -79,19 +86,27 @@ update msg model =
 
         Submit ->
             ( { model
-                | todos = model.todos ++ [ addTodo model.userInput (getId model.cuid model.cuidCounter) ]
+                | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
                 , userInput = ""
                 , cuidCounter = model.cuidCounter + 1
               }
             , Cmd.none
             )
 
-        TodoClick id ->
+        TodoToggleClick id ->
             ( { model
                 | todos =
                     List.map
                         (completeTodo id)
                         model.todos
+              }
+            , Cmd.none
+            )
+
+        TodoTextClick todo ->
+            ( { model
+                | selected = Just todo
+                , userInput = todo.text
               }
             , Cmd.none
             )
@@ -110,5 +125,5 @@ view model =
                     ]
                 ]
             ]
-        , todoList model.todos TodoClick
+        , todoList model.todos TodoToggleClick TodoTextClick
         ]

@@ -5,8 +5,12 @@ import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 
 
+type alias Id =
+    String
+
+
 type alias Todo =
-    { id : String
+    { id : Id
     , text : String
     , description : String
     , completed : Bool
@@ -21,11 +25,11 @@ getStyle completed =
         [ ( "opacity", "1" ) ]
 
 
-todo : (String -> a) -> Int -> Todo -> Html a
-todo msg index todo =
+todo : (Id -> a) -> (Todo -> a) -> Int -> Todo -> Html a
+todo todoToggleClick todoTextClick index todo =
     li
         [ class "list-group-item", style (getStyle todo.completed) ]
-        [ span [ class "badge pull-left cm-todo-toggle", onClick <| msg todo.id ] [ text (toString index) ]
+        [ span [ class "badge pull-left cm-todo-toggle", onClick <| todoToggleClick todo.id ] [ text (toString index) ]
         , span [ class "badge" ] [ text "Project 1" ]
-        , text todo.text
+        , span [ onClick <| todoTextClick todo ] [ text todo.text ]
         ]
