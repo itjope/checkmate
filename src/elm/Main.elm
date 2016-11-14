@@ -1,5 +1,7 @@
 module Main exposing (..)
 
+import Dom exposing (focus)
+import Task exposing (Task)
 import Html exposing (Html, div, input, text, span)
 import Html.App as Html
 import Html.Attributes exposing (..)
@@ -37,6 +39,8 @@ type Msg
     | Submit
     | TodoToggleClick Id
     | TodoTextClick Todo
+    | DomError Dom.Error
+    | DomSuccess
 
 
 type alias Model =
@@ -70,7 +74,7 @@ getId cuid cuidCounter =
     cuid ++ toString cuidCounter
 
 
-completeTodo : String -> Todo -> Todo
+completeTodo : Id -> Todo -> Todo
 completeTodo id todo =
     if todo.id == id then
         { todo | completed = not todo.completed }
@@ -78,20 +82,39 @@ completeTodo id todo =
         todo
 
 
+updateTodo : Id -> String -> Todo -> Todo
+updateTodo id text todo =
+    if todo.id == id then
+        { todo | text = text }
+    else
+        todo
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Change updatedCommand ->
-            ( { model | userInput = updatedCommand }, Cmd.none )
+        Change value ->
+            ( { model | userInput = value }, Cmd.none )
 
         Submit ->
-            ( { model
-                | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
-                , userInput = ""
-                , cuidCounter = model.cuidCounter + 1
-              }
-            , Cmd.none
-            )
+            case model.selected of
+                Nothing ->
+                    ( { model
+                        | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
+                        , userInput = ""
+                        , cuidCounter = model.cuidCounter + 1
+                      }
+                    , Cmd.none
+                    )
+
+                Just todo ->
+                    ( { model
+                        | userInput = ""
+                        , selected = Nothing
+                        , todos = List.map (updateTodo todo.id model.userInput) model.todos
+                      }
+                    , Cmd.none
+                    )
 
         TodoToggleClick id ->
             ( { model
@@ -104,10 +127,27 @@ update msg model =
             )
 
         TodoTextClick todo ->
+            let
+                cmd =
+                    focus "cm-command-input"
+                        |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
+            in
+                ( { model
+                    | selected = Just todo
+                    , userInput = todo.text
+                  }
+                , cmd
+                )
+
+        DomError error ->
             ( { model
-                | selected = Just todo
-                , userInput = todo.text
+                | userInput = "Failed to set focus"
               }
+            , Cmd.none
+            )
+
+        DomSuccess ->
+            ( model
             , Cmd.none
             )
 
@@ -121,7 +161,7 @@ view model =
                     [ div [ class "input-group-addon" ]
                         [ span [ class "glyphicon glyphicon-option-vertical" ] []
                         ]
-                    , input [ class "form-control", value model.userInput, onInput Change ] []
+                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change ] []
                     ]
                 ]
             ]
