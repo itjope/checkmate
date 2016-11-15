@@ -28,12 +28,23 @@ type alias Flags =
     }
 
 
+isNotTag : String -> Bool
+isNotTag word =
+    not (String.startsWith "#" word)
+
+
+isTag : String -> Bool
+isTag word =
+    String.startsWith "#" word
+
+
 addTodo : Id -> String -> Todo
 addTodo id text =
     { id = id
     , text = text
-    , description = "test"
+    , description = parseTodoDescription text
     , completed = False
+    , tags = parseTodoTags text
     }
 
 
@@ -91,10 +102,24 @@ completeTodo id todo =
         todo
 
 
+parseTodoDescription : String -> String
+parseTodoDescription text =
+    String.words text |> List.filter isNotTag |> String.join " "
+
+
+parseTodoTags : String -> List String
+parseTodoTags text =
+    String.words text |> List.filter isTag |> List.map (String.dropLeft 1)
+
+
 updateTodo : Id -> String -> Todo -> Todo
 updateTodo id text todo =
     if todo.id == id then
-        { todo | text = text }
+        { todo
+            | text = text
+            , description = parseTodoDescription text
+            , tags = parseTodoTags text
+        }
     else
         todo
 
@@ -147,7 +172,7 @@ update msg model =
             if model.autocompleteSelectedIndex > -1 then
                 let
                     selectedTodo =
-                        List.head (List.drop model.autocompleteSelectedIndex model.autocompletes)
+                        List.head <| List.drop model.autocompleteSelectedIndex model.autocompletes
                 in
                     case selectedTodo of
                         Nothing ->
