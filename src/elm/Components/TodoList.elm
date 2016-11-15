@@ -8,6 +8,6 @@ import Components.Todo exposing (Todo, Id, todo)
 todoList : List Todo -> (Id -> a) -> (Todo -> a) -> Html a
 todoList todos todoToggleClick todoTextClick =
     ul
-        [ class "list-group" ]
+        [ class "list-group cm-todos" ]
     <|
         List.indexedMap (todo todoToggleClick todoTextClick) todos

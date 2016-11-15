@@ -2,11 +2,13 @@ module Main exposing (..)
 
 import Dom exposing (focus)
 import Task exposing (Task)
+import String exposing (startsWith)
 import Html exposing (Html, div, input, text, span)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit, onBlur)
 import Components.TodoList exposing (todoList)
+import Components.AutoComplete exposing (autoComplete)
 import Components.Todo exposing (Todo, Id)
 import Json.Decode as Json
 
@@ -52,6 +54,8 @@ type alias Model =
     , userInput : String
     , cuid : String
     , cuidCounter : Int
+    , autocompletes : List Todo
+    , autocompleteSelectedIndex : Int
     }
 
 
@@ -62,6 +66,8 @@ getInitialModel flags =
     , userInput = ""
     , cuid = flags.cuid
     , cuidCounter = 0
+    , autocompletes = []
+    , autocompleteSelectedIndex = -1
     }
 
 
@@ -93,37 +99,88 @@ updateTodo id text todo =
         todo
 
 
+autocompleteTodo : String -> Todo -> Bool
+autocompleteTodo userInput todo =
+    startsWith userInput todo.text
+
+
+getNextAutocompleteIndex : Int -> Int -> Int
+getNextAutocompleteIndex currentIndex todosLength =
+    if currentIndex < todosLength then
+        currentIndex + 1
+    else
+        0
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Keystroke keyCode ->
             if keyCode == 27 then
-                ( { model | userInput = "", selected = Nothing }, Cmd.none )
+                ( { model
+                    | userInput = ""
+                    , selected = Nothing
+                    , autocompletes = []
+                    , autocompleteSelectedIndex = -1
+                  }
+                , Cmd.none
+                )
+            else if keyCode == 9 then
+                ( { model
+                    | autocompletes = List.filter (autocompleteTodo model.userInput) model.todos
+                    , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
+                  }
+                , Cmd.none
+                )
             else
-                ( model, Cmd.none )
+                ( { model
+                    | autocompletes = []
+                    , autocompleteSelectedIndex = -1
+                  }
+                , Cmd.none
+                )
 
         Change value ->
             ( { model | userInput = value }, Cmd.none )
 
         Submit ->
-            case model.selected of
-                Nothing ->
-                    ( { model
-                        | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
-                        , userInput = ""
-                        , cuidCounter = model.cuidCounter + 1
-                      }
-                    , Cmd.none
-                    )
+            if model.autocompleteSelectedIndex > -1 then
+                let
+                    selectedTodo =
+                        List.head (List.drop model.autocompleteSelectedIndex model.autocompletes)
+                in
+                    case selectedTodo of
+                        Nothing ->
+                            ( model
+                            , Cmd.none
+                            )
 
-                Just todo ->
-                    ( { model
-                        | userInput = ""
-                        , selected = Nothing
-                        , todos = List.map (updateTodo todo.id model.userInput) model.todos
-                      }
-                    , Cmd.none
-                    )
+                        Just todo ->
+                            ( { model
+                                | selected = Just todo
+                                , userInput = todo.text
+                              }
+                            , Cmd.none
+                            )
+            else
+                case model.selected of
+                    Nothing ->
+                        ( { model
+                            | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
+                            , userInput = ""
+                            , cuidCounter = model.cuidCounter + 1
+                          }
+                        , Cmd.none
+                        )
+
+                    Just todo ->
+                        ( { model
+                            | userInput = ""
+                            , selected = Nothing
+                            , todos = List.map (updateTodo todo.id model.userInput) model.todos
+                          }
+                        , Cmd.none
+                        )
 
         TodoToggleClick id ->
             ( { model
@@ -173,12 +230,13 @@ view : Model -> Html Msg
 view model =
     div []
         [ Html.form [ class "cm-command", onSubmit Submit ]
-            [ div [ class "form-group" ]
+            [ autoComplete model.autocompletes model.autocompleteSelectedIndex
+            , div [ class "form-group" ]
                 [ div [ class "input-group" ]
                     [ div [ class "input-group-addon" ]
                         [ span [ class "glyphicon glyphicon-option-vertical" ] []
                         ]
-                    , input [ id "cm-command-input", class "form-control", value model.userInput, onInput Change, onBlur Blur, onKeyUp Keystroke ] []
+                    , input [ id "cm-command-input", class "form-control", autocomplete False, value model.userInput, onInput Change, onBlur Blur, onKeyUp Keystroke ] []
                     ]
                 ]
             ]
