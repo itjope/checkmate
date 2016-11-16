@@ -5,6 +5,7 @@ import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Types exposing (Id, Todo)
 import Msg exposing (Msg(..))
+import String
 
 
 getStyle : Bool -> List ( String, String )
@@ -22,6 +23,14 @@ getBadges badges =
         badges
 
 
+parseDescription : String -> String
+parseDescription description =
+    if String.length description < 1 then
+        "(empty)"
+    else
+        description
+
+
 todo : Int -> Todo -> Html Msg
 todo index todo =
     li
@@ -29,4 +38,4 @@ todo index todo =
     <|
         [ span [ class "badge pull-left cm-todo-toggle", onClick <| TodoToggleClick todo.id ] [ text (toString index) ] ]
             ++ getBadges todo.tags
-            ++ [ span [ onClick <| TodoTextClick todo ] [ text todo.description ] ]
+            ++ [ span [ onClick <| TodoTextClick todo ] [ text <| parseDescription todo.description ] ]
