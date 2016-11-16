@@ -2,7 +2,8 @@ module Components.TodoList exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Components.Todo exposing (Todo, Id, todo)
+import Types exposing (Todo, Id)
+import Components.Todo exposing (todo)
 
 
 todoList : List Todo -> (Id -> a) -> (Todo -> a) -> Html a

@@ -1,21 +1,9 @@
-module Components.Todo exposing (..)
+module Components.Todo exposing (todo)
 
 import Html exposing (Html, li, text, span)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-
-
-type alias Id =
-    String
-
-
-type alias Todo =
-    { id : Id
-    , text : String
-    , description : String
-    , completed : Bool
-    , tags : List String
-    }
+import Types exposing (Id, Todo)
 
 
 getStyle : Bool -> List ( String, String )
