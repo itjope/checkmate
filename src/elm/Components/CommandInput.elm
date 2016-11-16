@@ -1,7 +1,7 @@
 module Components.CommandInput exposing (commandInput)
 
 import Html exposing (Html, form, div, span, input)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, autocomplete, value, id)
 import Html.Events exposing (onInput, onSubmit, onBlur)
 import Json.Decode as Json
 import Msg exposing (Msg(..))

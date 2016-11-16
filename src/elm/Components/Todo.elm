@@ -4,6 +4,7 @@ import Html exposing (Html, li, text, span)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Types exposing (Id, Todo)
+import Msg exposing (Msg(..))
 
 
 getStyle : Bool -> List ( String, String )
@@ -21,11 +22,11 @@ getBadges badges =
         badges
 
 
-todo : (Id -> a) -> (Todo -> a) -> Int -> Todo -> Html a
-todo todoToggleClick todoTextClick index todo =
+todo : Int -> Todo -> Html Msg
+todo index todo =
     li
         [ class "list-group-item", style (getStyle todo.completed) ]
     <|
-        [ span [ class "badge pull-left cm-todo-toggle", onClick <| todoToggleClick todo.id ] [ text (toString index) ] ]
+        [ span [ class "badge pull-left cm-todo-toggle", onClick <| TodoToggleClick todo.id ] [ text (toString index) ] ]
             ++ getBadges todo.tags
-            ++ [ span [ onClick <| todoTextClick todo ] [ text todo.description ] ]
+            ++ [ span [ onClick <| TodoTextClick todo ] [ text todo.description ] ]

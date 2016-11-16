@@ -1,7 +1,7 @@
 module View exposing (view)
 
 import Html exposing (Html, div)
-import Msg exposing (Msg(..))
+import Msg exposing (Msg)
 import Model exposing (Model)
 import Components.TodoList exposing (todoList)
 import Components.AutoComplete exposing (autoComplete)
@@ -13,5 +13,5 @@ view model =
     div []
         [ commandInput model.userInput
         , autoComplete model.autocompletes model.autocompleteSelectedIndex
-        , todoList model.todos TodoToggleClick TodoTextClick
+        , todoList model.todos
         ]

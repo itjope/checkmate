@@ -1,6 +1,6 @@
 module Components.AutoComplete exposing (autoComplete)
 
-import Html exposing (..)
+import Html exposing (Html, ul, li, text)
 import Html.Attributes exposing (class)
 import Types exposing (Todo)
 
@@ -16,6 +16,6 @@ getClass isSelected =
 autoComplete : List Todo -> Int -> Html a
 autoComplete todos selectedIndex =
     ul
-        [ class "list-group" ]
+        [ class "list-group cm-autocomplete" ]
     <|
         List.indexedMap (\index todo -> li [ class (getClass (selectedIndex == index)) ] [ text todo.text ]) todos

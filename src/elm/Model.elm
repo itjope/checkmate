@@ -1,4 +1,4 @@
-module Model exposing (..)
+module Model exposing (Model, getInitialModel)
 
 import Types exposing (Flags, Todo)
 

@@ -14,6 +14,18 @@ form.cm-command {
   z-index: 1;
   background-color: #fff;
 }
+
+ul.cm-autocomplete {
+  position: fixed;
+  bottom: 40px;
+  left: 0px;
+  padding-right: 23px;
+  z-index: 1;
+  background-color: #fff;
+  width: 100%;
+}
+
+
 .form-control {
   border-radius: $border-radius;
 }

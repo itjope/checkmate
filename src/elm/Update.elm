@@ -2,7 +2,7 @@ module Update exposing (update)
 
 import Dom
 import Model exposing (Model)
-import Msg exposing (..)
+import Msg exposing (Msg(..))
 import Types exposing (Id, Todo)
 import String
 import Task
