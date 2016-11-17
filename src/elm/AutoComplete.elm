@@ -1,8 +1,8 @@
-module Components.AutoComplete exposing (autoComplete)
+module AutoComplete exposing (autoComplete)
 
 import Html exposing (Html, ul, li, text)
 import Html.Attributes exposing (class)
-import Types exposing (Todo)
+import Todo exposing (Todo)
 
 
 getClass : Bool -> String
