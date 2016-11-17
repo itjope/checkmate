@@ -5,8 +5,6 @@ import Html exposing (Html, div, span, input, form)
 import Dom
 import String
 import Task
-import Html.Events exposing (onClick, onSubmit, onInput, onBlur, on, keyCode)
-import Html.Attributes exposing (id, class, autocomplete, value)
 import Todo exposing (Todo, Id, todoList)
 import AutoComplete exposing (autoComplete)
 import CommandInput exposing (commandInput)
@@ -54,6 +52,25 @@ type alias Model =
 type alias Flags =
     { cuid : String
     }
+
+
+type KeyboardKey
+    = Esc
+    | Tab
+    | Other
+
+
+getKeyboardKey : Int -> KeyboardKey
+getKeyboardKey keyCode =
+    case keyCode of
+        27 ->
+            Esc
+
+        9 ->
+            Tab
+
+        _ ->
+            Other
 
 
 getInitialModel : Flags -> Model
@@ -140,29 +157,32 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Keystroke keyCode ->
-            if keyCode == 27 then
-                ( { model
-                    | userInput = ""
-                    , selected = Nothing
-                    , autocompletes = []
-                    , autocompleteSelectedIndex = -1
-                  }
-                , Cmd.none
-                )
-            else if keyCode == 9 then
-                ( { model
-                    | autocompletes = List.filter (autocompleteTodo model.userInput) model.todos
-                    , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
-                  }
-                , Cmd.none
-                )
-            else
-                ( { model
-                    | autocompletes = []
-                    , autocompleteSelectedIndex = -1
-                  }
-                , Cmd.none
-                )
+            case getKeyboardKey keyCode of
+                Esc ->
+                    ( { model
+                        | userInput = ""
+                        , selected = Nothing
+                        , autocompletes = []
+                        , autocompleteSelectedIndex = -1
+                      }
+                    , Cmd.none
+                    )
+
+                Tab ->
+                    ( { model
+                        | autocompletes = List.filter (autocompleteTodo model.userInput) model.todos
+                        , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
+                      }
+                    , Cmd.none
+                    )
+
+                Other ->
+                    ( { model
+                        | autocompletes = []
+                        , autocompleteSelectedIndex = -1
+                      }
+                    , Cmd.none
+                    )
 
         Change value ->
             ( { model | userInput = value }, Cmd.none )
