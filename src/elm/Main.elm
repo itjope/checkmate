@@ -60,6 +60,11 @@ type KeyboardKey
     | Other
 
 
+type SubmitType
+    = Autocomplete
+    | Input
+
+
 getKeyboardKey : Int -> KeyboardKey
 getKeyboardKey keyCode =
     case keyCode of
@@ -122,7 +127,7 @@ updateTodo id text todo =
 
 autocompleteTodo : String -> Todo -> Bool
 autocompleteTodo userInput todo =
-    String.startsWith userInput todo.text
+    String.startsWith (String.toLower userInput) (String.toLower todo.text)
 
 
 getNextAutocompleteIndex : Int -> Int -> Int
@@ -151,6 +156,24 @@ addTodo id text =
     , completed = False
     , tags = parseTodoTags text
     }
+
+
+submitType : Model -> SubmitType
+submitType model =
+    if model.autocompleteSelectedIndex > -1 then
+        Autocomplete
+    else
+        Input
+
+
+selectedId : Maybe Todo -> String
+selectedId selectedTodo =
+    case selectedTodo of
+        Just todo ->
+            todo.id
+
+        Nothing ->
+            ""
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -188,43 +211,45 @@ update msg model =
             ( { model | userInput = value }, Cmd.none )
 
         Submit ->
-            if model.autocompleteSelectedIndex > -1 then
-                let
-                    selectedTodo =
-                        List.head <| List.drop model.autocompleteSelectedIndex model.autocompletes
-                in
-                    case selectedTodo of
+            case submitType model of
+                Autocomplete ->
+                    let
+                        selectedTodo =
+                            List.head <| List.drop model.autocompleteSelectedIndex model.autocompletes
+                    in
+                        case selectedTodo of
+                            Nothing ->
+                                ( model
+                                , Cmd.none
+                                )
+
+                            Just todo ->
+                                ( { model
+                                    | selected = Just todo
+                                    , userInput = todo.text
+                                  }
+                                , Cmd.none
+                                )
+
+                Input ->
+                    case model.selected of
                         Nothing ->
-                            ( model
+                            ( { model
+                                | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
+                                , userInput = ""
+                                , cuidCounter = model.cuidCounter + 1
+                              }
                             , Cmd.none
                             )
 
                         Just todo ->
                             ( { model
-                                | selected = Just todo
-                                , userInput = todo.text
+                                | userInput = ""
+                                , selected = Nothing
+                                , todos = List.map (updateTodo todo.id model.userInput) model.todos
                               }
                             , Cmd.none
                             )
-            else
-                case model.selected of
-                    Nothing ->
-                        ( { model
-                            | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
-                            , userInput = ""
-                            , cuidCounter = model.cuidCounter + 1
-                          }
-                        , Cmd.none
-                        )
-
-                    Just todo ->
-                        ( { model
-                            | userInput = ""
-                            , selected = Nothing
-                            , todos = List.map (updateTodo todo.id model.userInput) model.todos
-                          }
-                        , Cmd.none
-                        )
 
         TodoToggleClick id ->
             ( { model
@@ -270,5 +295,5 @@ view model =
     div []
         [ commandInput model.userInput Submit Change Blur Keystroke
         , autoComplete model.autocompletes model.autocompleteSelectedIndex
-        , todoList model.todos TodoToggleClick TodoTextClick
+        , todoList model.todos (selectedId model.selected) TodoToggleClick TodoTextClick
         ]

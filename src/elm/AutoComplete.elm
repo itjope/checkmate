@@ -8,7 +8,7 @@ import Todo exposing (Todo)
 getClass : Bool -> String
 getClass isSelected =
     if isSelected then
-        "list-group-item selected"
+        "list-group-item active"
     else
         "list-group-item"
 

@@ -42,19 +42,27 @@ parseDescription description =
         description
 
 
-todo : (Id -> a) -> (Todo -> a) -> Int -> Todo -> Html a
-todo onToggleClick onTextClick index todo =
+appendActive : String -> Bool -> String
+appendActive classes active =
+    if active then
+        classes ++ " " ++ "active"
+    else
+        classes
+
+
+todo : (Id -> a) -> (Todo -> a) -> String -> Int -> Todo -> Html a
+todo onToggleClick onTextClick selectedId index todo =
     li
-        [ class "list-group-item", style (getStyle todo.completed) ]
+        [ class <| appendActive "list-group-item" (selectedId == todo.id), style (getStyle todo.completed) ]
     <|
         [ span [ class "badge pull-left cm-todo-toggle", onClick <| onToggleClick todo.id ] [ text (toString index) ] ]
             ++ getBadges todo.tags
             ++ [ span [ onClick <| onTextClick todo ] [ text <| parseDescription todo.description ] ]
 
 
-todoList : List Todo -> (Id -> a) -> (Todo -> a) -> Html a
-todoList todos onToggleClick onTextClick =
+todoList : List Todo -> String -> (Id -> a) -> (Todo -> a) -> Html a
+todoList todos selectedId onToggleClick onTextClick =
     ul
         [ class "list-group cm-todos" ]
     <|
-        List.indexedMap (todo onToggleClick onTextClick) todos
+        List.indexedMap (todo onToggleClick onTextClick selectedId) todos
