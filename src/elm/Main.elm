@@ -94,7 +94,7 @@ getInitialModel flags =
     , cuidCounter = 0
     , autocompletes = []
     , autocompleteSelectedIndex = -1
-    , commands = [ "/clear", "/complete", "/find" ]
+    , commands = [ "/clear" ]
     }
 
 
@@ -235,11 +235,16 @@ commandFromSelectedAutocomplete autocompletes autocompleteIndex commands =
 
 autocomplete : Model -> List AutocompleteItem
 autocomplete model =
-    -- List.filterMap (autocompleteCommand model.userInput) model.commands
     if String.startsWith "/" model.userInput then
         List.filterMap (autocompleteCommand model.userInput) model.commands
     else
         List.filterMap (autocompleteTodo model.userInput) model.todos
+
+
+focusCommandInput : Cmd Msg
+focusCommandInput =
+    Dom.focus "cm-command-input"
+        |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -352,21 +357,16 @@ update msg model =
                         (completeTodo id)
                         model.todos
               }
-            , Cmd.none
+            , focusCommandInput
             )
 
         TodoTextClick todo ->
-            let
-                cmd =
-                    Dom.focus "cm-command-input"
-                        |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
-            in
-                ( { model
-                    | selected = Just todo
-                    , userInput = todo.text
-                  }
-                , cmd
-                )
+            ( { model
+                | selected = Just todo
+                , userInput = todo.text
+              }
+            , focusCommandInput
+            )
 
         Blur ->
             ( { model | selected = Nothing, userInput = "" }, Cmd.none )
