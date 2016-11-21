@@ -70,6 +70,7 @@ type SubmitType
 
 type CommandName
     = Clear
+    | Complete (List Int)
 
 
 getKeyboardKey : Int -> KeyboardKey
@@ -94,7 +95,7 @@ getInitialModel flags =
     , cuidCounter = 0
     , autocompletes = []
     , autocompleteSelectedIndex = -1
-    , commands = [ "/clear" ]
+    , commands = [ "/clear", "/complete" ]
     }
 
 
@@ -191,6 +192,26 @@ submitType model =
         AutocompleteTodo
     else if String.startsWith "/clear" model.userInput then
         Command Clear
+    else if String.startsWith "/complete" model.userInput then
+        let
+            indexes =
+                String.words model.userInput
+                    |> List.map
+                        (\word ->
+                            let
+                                res =
+                                    String.toInt word
+                            in
+                                case res of
+                                    Ok number ->
+                                        number
+
+                                    Err error ->
+                                        -1
+                        )
+                    |> List.filter (\number -> number > -1)
+        in
+            Command (Complete indexes)
     else
         Input
 
@@ -245,6 +266,23 @@ focusCommandInput : Cmd Msg
 focusCommandInput =
     Dom.focus "cm-command-input"
         |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
+
+
+removeAtIndexes : List Int -> List Todo -> List Todo
+removeAtIndexes indexes todos =
+    let
+        idsToRemove =
+            List.indexedMap
+                (\index todo ->
+                    { id = todo.id
+                    , remove = List.member index indexes
+                    }
+                )
+                todos
+                |> List.filter (\todo -> todo.remove)
+                |> List.map (\todo -> todo.id)
+    in
+        List.filter (\todo -> List.member todo.id idsToRemove == False) todos
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -325,6 +363,14 @@ update msg model =
                         Clear ->
                             ( { model
                                 | todos = List.filter (\todo -> todo.completed == False) model.todos
+                                , userInput = ""
+                              }
+                            , Cmd.none
+                            )
+
+                        Complete indexes ->
+                            ( { model
+                                | todos = removeAtIndexes indexes model.todos
                                 , userInput = ""
                               }
                             , Cmd.none
