@@ -6,7 +6,7 @@ import Dom
 import String
 import Task
 import Todo exposing (Todo, Id, todoList)
-import AutoComplete exposing (autoComplete)
+import AutoComplete exposing (AutocompleteItem, autoComplete)
 import CommandInput exposing (commandInput)
 
 
@@ -44,8 +44,9 @@ type alias Model =
     , userInput : String
     , cuid : String
     , cuidCounter : Int
-    , autocompletes : List Todo
+    , autocompletes : List AutocompleteItem
     , autocompleteSelectedIndex : Int
+    , commands : List String
     }
 
 
@@ -61,8 +62,14 @@ type KeyboardKey
 
 
 type SubmitType
-    = Autocomplete
+    = AutocompleteTodo
+    | AutocompleteCommand
+    | Command CommandName
     | Input
+
+
+type CommandName
+    = Clear
 
 
 getKeyboardKey : Int -> KeyboardKey
@@ -87,6 +94,7 @@ getInitialModel flags =
     , cuidCounter = 0
     , autocompletes = []
     , autocompleteSelectedIndex = -1
+    , commands = [ "/clear", "/complete", "/find" ]
     }
 
 
@@ -125,9 +133,26 @@ updateTodo id text todo =
         todo
 
 
-autocompleteTodo : String -> Todo -> Bool
+autocompleteTodo : String -> Todo -> Maybe AutocompleteItem
 autocompleteTodo userInput todo =
-    String.startsWith (String.toLower userInput) (String.toLower todo.text)
+    if String.startsWith (String.toLower userInput) (String.toLower todo.text) then
+        Just
+            { key = todo.id
+            , text = todo.text
+            }
+    else
+        Nothing
+
+
+autocompleteCommand : String -> String -> Maybe AutocompleteItem
+autocompleteCommand userInput command =
+    if String.startsWith userInput command then
+        Just
+            { key = command
+            , text = command
+            }
+    else
+        Nothing
 
 
 getNextAutocompleteIndex : Int -> Int -> Int
@@ -160,8 +185,12 @@ addTodo id text =
 
 submitType : Model -> SubmitType
 submitType model =
-    if model.autocompleteSelectedIndex > -1 then
-        Autocomplete
+    if model.autocompleteSelectedIndex > -1 && String.startsWith "/" model.userInput then
+        AutocompleteCommand
+    else if model.autocompleteSelectedIndex > -1 then
+        AutocompleteTodo
+    else if String.startsWith "/clear" model.userInput then
+        Command Clear
     else
         Input
 
@@ -174,6 +203,43 @@ selectedId selectedTodo =
 
         Nothing ->
             ""
+
+
+todoFromSelectedAutocomplete : List AutocompleteItem -> Int -> List Todo -> Maybe Todo
+todoFromSelectedAutocomplete autocompletes autocompleteIndex todos =
+    let
+        selectedItem =
+            List.head <| List.drop autocompleteIndex autocompletes
+    in
+        case selectedItem of
+            Just selected ->
+                List.head <| List.filter (\todo -> todo.id == selected.key) todos
+
+            Nothing ->
+                Nothing
+
+
+commandFromSelectedAutocomplete : List AutocompleteItem -> Int -> List String -> Maybe String
+commandFromSelectedAutocomplete autocompletes autocompleteIndex commands =
+    let
+        selectedItem =
+            List.head <| List.drop autocompleteIndex autocompletes
+    in
+        case selectedItem of
+            Just selected ->
+                List.head <| List.filter (\command -> command == selected.key) commands
+
+            Nothing ->
+                Nothing
+
+
+autocomplete : Model -> List AutocompleteItem
+autocomplete model =
+    -- List.filterMap (autocompleteCommand model.userInput) model.commands
+    if String.startsWith "/" model.userInput then
+        List.filterMap (autocompleteCommand model.userInput) model.commands
+    else
+        List.filterMap (autocompleteTodo model.userInput) model.todos
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -193,7 +259,7 @@ update msg model =
 
                 Tab ->
                     ( { model
-                        | autocompletes = List.filter (autocompleteTodo model.userInput) model.todos
+                        | autocompletes = autocomplete model
                         , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
                       }
                     , Cmd.none
@@ -212,10 +278,10 @@ update msg model =
 
         Submit ->
             case submitType model of
-                Autocomplete ->
+                AutocompleteTodo ->
                     let
                         selectedTodo =
-                            List.head <| List.drop model.autocompleteSelectedIndex model.autocompletes
+                            todoFromSelectedAutocomplete model.autocompletes model.autocompleteSelectedIndex model.todos
                     in
                         case selectedTodo of
                             Nothing ->
@@ -230,6 +296,34 @@ update msg model =
                                   }
                                 , Cmd.none
                                 )
+
+                AutocompleteCommand ->
+                    let
+                        selectedCommand =
+                            commandFromSelectedAutocomplete model.autocompletes model.autocompleteSelectedIndex model.commands
+                    in
+                        case selectedCommand of
+                            Nothing ->
+                                ( model
+                                , Cmd.none
+                                )
+
+                            Just command ->
+                                ( { model
+                                    | userInput = command ++ " "
+                                  }
+                                , Cmd.none
+                                )
+
+                Command name ->
+                    case name of
+                        Clear ->
+                            ( { model
+                                | todos = List.filter (\todo -> todo.completed == False) model.todos
+                                , userInput = ""
+                              }
+                            , Cmd.none
+                            )
 
                 Input ->
                     case model.selected of

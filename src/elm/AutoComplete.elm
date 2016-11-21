@@ -1,8 +1,13 @@
-module AutoComplete exposing (autoComplete)
+module AutoComplete exposing (autoComplete, AutocompleteItem)
 
 import Html exposing (Html, ul, li, text)
 import Html.Attributes exposing (class)
-import Todo exposing (Todo)
+
+
+type alias AutocompleteItem =
+    { key : String
+    , text : String
+    }
 
 
 getClass : Bool -> String
@@ -13,9 +18,9 @@ getClass isSelected =
         "list-group-item"
 
 
-autoComplete : List Todo -> Int -> Html a
-autoComplete todos selectedIndex =
+autoComplete : List AutocompleteItem -> Int -> Html a
+autoComplete items selectedIndex =
     ul
         [ class "list-group cm-autocomplete" ]
     <|
-        List.indexedMap (\index todo -> li [ class (getClass (selectedIndex == index)) ] [ text todo.text ]) todos
+        List.indexedMap (\index item -> li [ class (getClass (selectedIndex == index)) ] [ text item.text ]) items
