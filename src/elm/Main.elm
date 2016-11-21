@@ -268,21 +268,16 @@ focusCommandInput =
         |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
 
 
-removeAtIndexes : List Int -> List Todo -> List Todo
-removeAtIndexes indexes todos =
-    let
-        idsToRemove =
-            List.indexedMap
-                (\index todo ->
-                    { id = todo.id
-                    , remove = List.member index indexes
-                    }
-                )
-                todos
-                |> List.filter (\todo -> todo.remove)
-                |> List.map (\todo -> todo.id)
-    in
-        List.filter (\todo -> List.member todo.id idsToRemove == False) todos
+completeAtIndexes : List Int -> List Todo -> List Todo
+completeAtIndexes indexes todos =
+    List.indexedMap
+        (\index todo ->
+            ({ todo
+                | completed = List.member index indexes
+             }
+            )
+        )
+        todos
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -370,7 +365,7 @@ update msg model =
 
                         Complete indexes ->
                             ( { model
-                                | todos = removeAtIndexes indexes model.todos
+                                | todos = completeAtIndexes indexes model.todos
                                 , userInput = ""
                               }
                             , Cmd.none
