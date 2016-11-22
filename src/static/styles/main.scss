@@ -2,8 +2,31 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 @import '~bootstrap-sass/assets/stylesheets/bootstrap/_mixins.scss';
 @import '~bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 
+$base03:  #002b36;
+$base02:  #073642;
+$base01:  #586e75;
+$base00:  #657b83;
+$base0:   #839496;
+$base1:   #93a1a1;
+$base2:   #eee8d5;
+$base3:   #fdf6e3;
+$yellow:  #b58900;
+$orange:  #cb4b16;
+$red:     #dc322f;
+$magenta: #d33682;
+$violet:  #6c71c4;
+$blue:    #268bd2;
+$cyan:    #2aa198;
+$green:   #859900;
+
 $background-color: #cecece;
-$border-radius: 1px;
+$border-radius: 2px;
+
+body {
+  background-color: $base03;
+  color: $base0;
+  font-weight: 200;
+}
 
 form.cm-command {
   position: fixed;
@@ -12,16 +35,20 @@ form.cm-command {
   padding-left: 10px;
   padding-right: 13px;
   z-index: 1;
-  background-color: #fff;
+  height: 60px;
+  padding-top: 10px;
+  background-color: $base03;
 }
 
 ul.cm-autocomplete {
   position: fixed;
   bottom: 40px;
-  left: 0px;
-  padding-right: 23px;
+  left: -10px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 5px;
+  background-color: $base02;
   z-index: 1;
-  background-color: #fff;
   width: 100%;
 }
 
@@ -32,21 +59,25 @@ ul.cm-autocomplete {
 
 .badge {
   border-radius: $border-radius;
-  font-weight: 200;
-  background-color: $background-color;
+  font-weight: 500;
+  background-color: $base02;
   min-width: 28px;
+  color: $base01;
 }
 
 .input-group-addon {
   border-radius: $border-radius;
-  background-color: $background-color;
-  color: #fff;
+  border-width: 0px;
+  background-color: $base02;
+  color: $base01;
 }
 
 span.cm-todo-toggle {
   margin-right: 5px;
   cursor: pointer;
   user-select: none;
+  background-color: $base02;
+  color: $base00;
 }
 
 .cm-todos {
@@ -72,9 +103,21 @@ span.cm-todo-toggle {
   margin-top: 4px;
   border-radius: 0px;
   padding: 5px 10px;
-  border-left: solid 3px #eee;
+  border-left: solid 3px $base02;
+  background-color: $base03;
 }
 
 .list-group-item.selected {
-  background-color: $background-color;
+  background-color: $cyan;
+}
+
+.list-group-item.active, .list-group-item.active:hover {
+  background-color: $cyan;
+  border-color: $base0;
+
+}
+
+input.form-control {
+  border: none;
+  background-color: $base3;
 }
