@@ -170,8 +170,13 @@ isNotTag word =
 
 
 isTag : String -> Bool
-isTag word =
-    String.startsWith "#" word
+isTag =
+    String.startsWith "#"
+
+
+isCommand : String -> Bool
+isCommand =
+    String.startsWith "/"
 
 
 addTodo : Id -> String -> Todo
@@ -186,7 +191,7 @@ addTodo id text =
 
 submitType : Model -> SubmitType
 submitType model =
-    if model.autocompleteSelectedIndex > -1 && String.startsWith "/" model.userInput then
+    if model.autocompleteSelectedIndex > -1 && isCommand model.userInput then
         AutocompleteCommand
     else if model.autocompleteSelectedIndex > -1 then
         AutocompleteTodo
@@ -256,7 +261,7 @@ commandFromSelectedAutocomplete autocompletes autocompleteIndex commands =
 
 autocomplete : Model -> List AutocompleteItem
 autocomplete model =
-    if String.startsWith "/" model.userInput then
+    if isCommand model.userInput then
         List.filterMap (autocompleteCommand model.userInput) model.commands
     else
         List.filterMap (autocompleteTodo model.userInput) model.todos
@@ -296,12 +301,35 @@ update msg model =
                     )
 
                 Tab ->
-                    ( { model
-                        | autocompletes = autocomplete model
-                        , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
-                      }
-                    , Cmd.none
-                    )
+                    let
+                        autocompletes =
+                            autocomplete model
+
+                        firstAutocomplete =
+                            List.head autocompletes
+                    in
+                        if List.length autocompletes == 1 && isCommand model.userInput then
+                            case firstAutocomplete of
+                                Just command ->
+                                    ( { model
+                                        | autocompletes = []
+                                        , autocompleteSelectedIndex = -1
+                                        , userInput = command.text ++ " "
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                Nothing ->
+                                    ( model
+                                    , Cmd.none
+                                    )
+                        else
+                            ( { model
+                                | autocompletes = autocompletes
+                                , autocompleteSelectedIndex = getNextAutocompleteIndex model.autocompleteSelectedIndex (List.length model.autocompletes)
+                              }
+                            , Cmd.none
+                            )
 
                 Other ->
                     ( { model
