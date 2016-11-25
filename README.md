@@ -1,6 +1,6 @@
 # Checkmate - CLI inspired todo app
 
-![checkmate_demo](https://cloud.githubusercontent.com/assets/5778239/20577265/d02f395c-b1c1-11e6-8cb7-5d71ebd75d1f.gif)
+![checkmate_demo](https://dl.dropboxusercontent.com/u/7738772/checkmate_demo.gif)
 
 ### Install
 Clone this repo into a new project folder, e.g. `checkmate-fork`, and install its dependencies:
