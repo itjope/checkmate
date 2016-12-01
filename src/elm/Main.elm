@@ -349,6 +349,10 @@ todosDecoder =
     JsonDecode.list todoDecoder
 
 
+saveTodos todos =
+    saveTodosToPouch <| Json.encode 1 (todosEncoder todos)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -483,12 +487,16 @@ update msg model =
                             )
 
                         Complete indexes ->
-                            ( { model
-                                | todos = completeAtIndexes indexes model.todos
-                                , userInput = ""
-                              }
-                            , Cmd.none
-                            )
+                            let
+                                todos =
+                                    completeAtIndexes indexes model.todos
+                            in
+                                ( { model
+                                    | todos = todos
+                                    , userInput = ""
+                                  }
+                                , saveTodos todos
+                                )
 
                 Input ->
                     case model.selected of
@@ -502,27 +510,32 @@ update msg model =
                                     , userInput = ""
                                     , cuidCounter = model.cuidCounter + 1
                                   }
-                                , saveTodosToPouch (Json.encode 1 (todosEncoder [ todo ]))
+                                , saveTodos [ todo ]
                                 )
 
                         Just todo ->
-                            ( { model
-                                | userInput = ""
-                                , selected = Nothing
-                                , todos = List.map (updateTodo todo.id model.userInput) model.todos
-                              }
-                            , Cmd.none
-                            )
+                            let
+                                todos =
+                                    List.map (updateTodo todo.id model.userInput) model.todos
+                            in
+                                ( { model
+                                    | userInput = ""
+                                    , selected = Nothing
+                                    , todos = todos
+                                  }
+                                , saveTodos todos
+                                )
 
         TodoToggleClick id ->
-            ( { model
-                | todos =
-                    List.map
-                        (completeTodo id)
-                        model.todos
-              }
-            , focusCommandInput
-            )
+            let
+                todos =
+                    List.map (completeTodo id) model.todos
+            in
+                ( { model
+                    | todos = todos
+                  }
+                , Cmd.batch [ focusCommandInput, saveTodos todos ]
+                )
 
         TodoTextClick todo ->
             ( { model

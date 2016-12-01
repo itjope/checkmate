@@ -28,8 +28,10 @@ app.ports.saveTodosToPouch.subscribe(function (todos) {
 
 app.ports.getTodosFromPouch.subscribe(function (filter) {
     todosDB.allDocs({include_docs: true}).then(function (result) {
-      console.log('result', result)
-      const todos = result.rows.map(row => row.doc)
+      const todos = result.rows
+        .filter(row => row.doc.completed !== true)
+        .map(row => row.doc)
+
       app.ports.pouchGetSuccess.send(JSON.stringify(todos))
     }).catch(function(err){
       console.error(err)
