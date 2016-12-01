@@ -1,7 +1,8 @@
-module Main exposing (..)
+port module Main exposing (..)
 
-import Html.App as App
-import Html exposing (Html, div, span, input, form)
+import Json.Encode as Json
+import Json.Decode as JsonDecode
+import Html exposing (Html, div, span, input, form, programWithFlags)
 import Dom
 import String
 import Task
@@ -10,20 +11,47 @@ import AutoComplete exposing (AutocompleteItem, autoComplete)
 import CommandInput exposing (commandInput)
 
 
-main : Program (Flags)
+port saveTodosToPouch : String -> Cmd msg
+
+
+port pouchSaveSuccess : (String -> msg) -> Sub msg
+
+
+port pouchSaveError : (String -> msg) -> Sub msg
+
+
+port getTodosFromPouch : String -> Cmd msg
+
+
+port pouchGetSuccess : (String -> msg) -> Sub msg
+
+
+port pouchGetError : (String -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ pouchSaveSuccess PouchSaveSuccess
+        , pouchSaveError PouchSaveError
+        , pouchGetSuccess PouchGetSuccess
+        , pouchGetError PouchGetError
+        ]
+
+
 main =
-    App.programWithFlags
+    programWithFlags
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( getInitialModel flags
-    , Cmd.none
+    , getTodosFromPouch ""
     )
 
 
@@ -33,9 +61,12 @@ type Msg
     | TodoToggleClick Id
     | TodoTextClick Todo
     | Blur
-    | DomError Dom.Error
-    | DomSuccess
+    | NoOp
     | Keystroke Int
+    | PouchSaveSuccess String
+    | PouchSaveError String
+    | PouchGetSuccess String
+    | PouchGetError String
 
 
 type alias Model =
@@ -267,10 +298,13 @@ autocomplete model =
         List.filterMap (autocompleteTodo model.userInput) model.todos
 
 
+always msg =
+    \x -> msg
+
+
 focusCommandInput : Cmd Msg
 focusCommandInput =
-    Dom.focus "cm-command-input"
-        |> Task.perform (\error -> DomError error) (\() -> DomSuccess)
+    Task.attempt (always NoOp) (Dom.focus "cm-command-input")
 
 
 completeAtIndexes : List Int -> List Todo -> List Todo
@@ -285,9 +319,64 @@ completeAtIndexes indexes todos =
         todos
 
 
+todosEncoder todos =
+    Json.list (List.map todoEncoder todos)
+
+
+todoEncoder todo =
+    Json.object
+        [ ( "_id", Json.string todo.id )
+        , ( "text", Json.string todo.text )
+        , ( "completed", Json.bool todo.completed )
+        ]
+
+
+createTodo id text completed =
+    let
+        todo =
+            addTodo id text
+    in
+        ({ todo | completed = completed })
+
+
+todoDecoder =
+    JsonDecode.map3 createTodo (JsonDecode.field "_id" JsonDecode.string) (JsonDecode.field "text" JsonDecode.string) (JsonDecode.field "completed" JsonDecode.bool)
+
+
+todosDecoder =
+    JsonDecode.list todoDecoder
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        PouchSaveSuccess result ->
+            ( model
+            , Cmd.none
+            )
+
+        PouchSaveError result ->
+            ( model
+            , Cmd.none
+            )
+
+        PouchGetSuccess result ->
+            case JsonDecode.decodeString todosDecoder <| result of
+                Err msg ->
+                    ( model
+                    , Cmd.none
+                    )
+
+                Ok todos ->
+                    ( { model | todos = todos }
+                    , Cmd.none
+                    )
+
+        PouchGetError result ->
+            ( model
+            , Cmd.none
+            )
+
         Keystroke keyCode ->
             case getKeyboardKey keyCode of
                 Esc ->
@@ -402,13 +491,17 @@ update msg model =
                 Input ->
                     case model.selected of
                         Nothing ->
-                            ( { model
-                                | todos = model.todos ++ [ addTodo (getId model.cuid model.cuidCounter) model.userInput ]
-                                , userInput = ""
-                                , cuidCounter = model.cuidCounter + 1
-                              }
-                            , Cmd.none
-                            )
+                            let
+                                todo =
+                                    addTodo (getId model.cuid model.cuidCounter) model.userInput
+                            in
+                                ( { model
+                                    | todos = model.todos ++ [ todo ]
+                                    , userInput = ""
+                                    , cuidCounter = model.cuidCounter + 1
+                                  }
+                                , saveTodosToPouch (Json.encode 1 (todosEncoder [ todo ]))
+                                )
 
                         Just todo ->
                             ( { model
@@ -440,14 +533,7 @@ update msg model =
         Blur ->
             ( { model | selected = Nothing, userInput = "" }, Cmd.none )
 
-        DomError error ->
-            ( { model
-                | userInput = "Failed to set focus"
-              }
-            , Cmd.none
-            )
-
-        DomSuccess ->
+        NoOp ->
             ( model
             , Cmd.none
             )
