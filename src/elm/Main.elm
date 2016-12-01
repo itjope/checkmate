@@ -78,6 +78,7 @@ type alias Model =
     , autocompletes : List AutocompleteItem
     , autocompleteSelectedIndex : Int
     , commands : List String
+    , errorMessages : List String
     }
 
 
@@ -127,6 +128,7 @@ getInitialModel flags =
     , autocompletes = []
     , autocompleteSelectedIndex = -1
     , commands = [ "/clear", "/complete" ]
+    , errorMessages = []
     }
 
 
@@ -362,13 +364,13 @@ update msg model =
 
         PouchGetSuccess result ->
             case JsonDecode.decodeString todosDecoder <| result of
-                Err msg ->
-                    ( model
+                Ok todos ->
+                    ( { model | todos = todos }
                     , Cmd.none
                     )
 
-                Ok todos ->
-                    ( { model | todos = todos }
+                Err msg ->
+                    ( { model | errorMessages = model.errorMessages ++ [ msg ] }
                     , Cmd.none
                     )
 
